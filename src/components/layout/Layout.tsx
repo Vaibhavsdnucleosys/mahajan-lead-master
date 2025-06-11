@@ -4,9 +4,11 @@ import { Outlet } from 'react-router-dom';
 import Header from './Header';
 import Sidebar from './Sidebar';
 import { useAuth } from '@/hooks/useAuth';
+import { useSampleData } from '@/hooks/useSampleData';
 
 const Layout = () => {
   const { user } = useAuth();
+  useSampleData(); // Initialize sample data
 
   if (!user) {
     return null;

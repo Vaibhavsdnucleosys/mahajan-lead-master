@@ -103,19 +103,48 @@
   }
 }
 
-/* Custom orange theme colors */
+/* Custom orange and black theme colors for #fd8320 and #000000 */
 .bg-orange-600 {
-  background-color: #fd8320;
+  background-color: #fd8320 !important;
 }
 
 .hover\:bg-orange-700:hover {
-  background-color: #e8741d;
+  background-color: #e8741d !important;
 }
 
 .text-orange-600 {
-  color: #fd8320;
+  color: #fd8320 !important;
 }
 
 .border-orange-600 {
-  border-color: #fd8320;
+  border-color: #fd8320 !important;
+}
+
+.text-orange-900 {
+  color: #000000 !important;
+}
+
+.bg-orange-100 {
+  background-color: #fff7ed !important;
+}
+
+.border-orange-600 {
+  border-color: #fd8320 !important;
+}
+
+/* Additional utility classes for the brand colors */
+.brand-orange {
+  color: #fd8320;
+}
+
+.brand-black {
+  color: #000000;
+}
+
+.bg-brand-orange {
+  background-color: #fd8320;
+}
+
+.bg-brand-black {
+  background-color: #000000;
 }
