@@ -48,6 +48,7 @@ export interface Proposal {
   cost: number;
   description: string;
   attachments: Attachment[];
+  spareParts?: string[];
   status: 'draft' | 'sent' | 'approved' | 'rejected';
   version: number;
   history: ProposalHistory[];

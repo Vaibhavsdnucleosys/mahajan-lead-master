@@ -1,21 +1,23 @@
 
 import React, { useState, useEffect } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearchParams, useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
-import { Lead, Proposal, ProposalTemplate, SparePart } from '@/types';
-import { Upload, X } from 'lucide-react';
+import { Lead, Proposal, ProposalTemplate, SparePart, ProposalHistory } from '@/types';
+import { Upload, X, History } from 'lucide-react';
 
 const CreateProposal = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { id } = useParams();
   const leadId = searchParams.get('leadId');
   
   const [leads] = useLocalStorage<Lead[]>('leads', []);
@@ -26,8 +28,13 @@ const CreateProposal = () => {
   const { user } = useAuth();
   const { toast } = useToast();
 
+  const isEditing = !!id;
+  const existingProposal = isEditing ? proposals.find(p => p.id === id) : null;
+  const lead = leadId ? leads.find(l => l.id === leadId) : 
+                (existingProposal ? leads.find(l => l.id === existingProposal.leadId) : null);
+
   const [formData, setFormData] = useState({
-    leadId: leadId || '',
+    leadId: leadId || existingProposal?.leadId || '',
     templateId: '',
     robot: '',
     controller: '',
@@ -40,7 +47,25 @@ const CreateProposal = () => {
     spareParts: [] as string[]
   });
 
-  const lead = leadId ? leads.find(l => l.id === leadId) : null;
+  const [showHistory, setShowHistory] = useState(false);
+
+  useEffect(() => {
+    if (existingProposal) {
+      setFormData({
+        leadId: existingProposal.leadId,
+        templateId: existingProposal.templateId || '',
+        robot: existingProposal.robot,
+        controller: existingProposal.controller,
+        reach: existingProposal.reach,
+        payload: existingProposal.payload,
+        brand: existingProposal.brand,
+        cost: existingProposal.cost,
+        description: existingProposal.description,
+        attachments: [],
+        spareParts: existingProposal.spareParts || []
+      });
+    }
+  }, [existingProposal]);
 
   const handleInputChange = (field: string, value: string | number) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -60,6 +85,11 @@ const CreateProposal = () => {
         cost: template.cost,
         description: template.description
       }));
+      
+      toast({
+        title: "Template Applied",
+        description: `Template "${template.name}" has been applied successfully.`
+      });
     }
   };
 
@@ -87,6 +117,14 @@ const CreateProposal = () => {
     }));
   };
 
+  const createHistory = (changes: string): ProposalHistory => ({
+    id: `history-${Date.now()}`,
+    version: (existingProposal?.version || 0) + 1,
+    changes,
+    modifiedBy: user?.id || '',
+    modifiedAt: new Date().toISOString()
+  });
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -99,40 +137,96 @@ const CreateProposal = () => {
       return;
     }
 
-    const proposal: Proposal = {
-      id: `proposal-${Date.now()}`,
-      leadId: formData.leadId,
-      templateId: formData.templateId || undefined,
-      robot: formData.robot,
-      controller: formData.controller,
-      reach: formData.reach,
-      payload: formData.payload,
-      brand: formData.brand,
-      cost: formData.cost,
-      description: formData.description,
-      status: 'draft',
-      version: 1,
-      history: [],
-      attachments: formData.attachments.map((file, index) => ({
-        id: `attachment-${Date.now()}-${index}`,
-        name: file.name,
-        url: URL.createObjectURL(file),
-        size: file.size,
-        type: file.type,
-        uploadedAt: new Date().toISOString(),
-        uploadedBy: user?.id || ''
-      })),
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      createdBy: user?.id || ''
-    };
+    if (!formData.robot || !formData.controller || !formData.reach || !formData.payload || !formData.brand) {
+      toast({
+        title: "Error",
+        description: "Please fill all required fields.",
+        variant: "destructive"
+      });
+      return;
+    }
 
-    setProposals(prev => [...prev, proposal]);
-    
-    toast({
-      title: "Proposal Created",
-      description: "Proposal has been successfully created.",
-    });
+    const now = new Date().toISOString();
+    let proposal: Proposal;
+    let changes = '';
+
+    if (isEditing && existingProposal) {
+      // Create history entry for the edit
+      changes = `Updated proposal: ${formData.robot} ${formData.controller}`;
+      const historyEntry = createHistory(changes);
+      
+      proposal = {
+        ...existingProposal,
+        templateId: formData.templateId || undefined,
+        robot: formData.robot,
+        controller: formData.controller,
+        reach: formData.reach,
+        payload: formData.payload,
+        brand: formData.brand,
+        cost: formData.cost,
+        description: formData.description,
+        spareParts: formData.spareParts,
+        version: historyEntry.version,
+        history: [...(existingProposal.history || []), historyEntry],
+        attachments: [
+          ...existingProposal.attachments,
+          ...formData.attachments.map((file, index) => ({
+            id: `attachment-${Date.now()}-${index}`,
+            name: file.name,
+            url: URL.createObjectURL(file),
+            size: file.size,
+            type: file.type,
+            uploadedAt: now,
+            uploadedBy: user?.id || ''
+          }))
+        ],
+        updatedAt: now
+      };
+
+      setProposals(prev => prev.map(p => p.id === proposal.id ? proposal : p));
+      
+      toast({
+        title: "Proposal Updated",
+        description: "Proposal has been successfully updated.",
+      });
+    } else {
+      // Create new proposal
+      proposal = {
+        id: `proposal-${Date.now()}`,
+        leadId: formData.leadId,
+        templateId: formData.templateId || undefined,
+        robot: formData.robot,
+        controller: formData.controller,
+        reach: formData.reach,
+        payload: formData.payload,
+        brand: formData.brand,
+        cost: formData.cost,
+        description: formData.description,
+        spareParts: formData.spareParts,
+        status: 'draft',
+        version: 1,
+        history: [],
+        attachments: formData.attachments.map((file, index) => ({
+          id: `attachment-${Date.now()}-${index}`,
+          name: file.name,
+          url: URL.createObjectURL(file),
+          size: file.size,
+          type: file.type,
+          uploadedAt: now,
+          uploadedBy: user?.id || ''
+        })),
+        createdAt: now,
+        updatedAt: now,
+        createdBy: user?.id || ''
+      };
+
+      setProposals(prev => [...prev, proposal]);
+      
+      toast({
+        title: "Proposal Created",
+        description: "Proposal has been successfully created.",
+      });
+    }
 
     navigate('/proposals');
   };
@@ -141,17 +235,65 @@ const CreateProposal = () => {
     <div className="max-w-4xl mx-auto">
       <Card>
         <CardHeader>
-          <CardTitle className="text-2xl font-bold">Create New Proposal</CardTitle>
-          {lead && (
-            <p className="text-gray-600">For: {lead.companyName} - {lead.contactPerson}</p>
-          )}
+          <div className="flex justify-between items-center">
+            <div>
+              <CardTitle className="text-2xl font-bold">
+                {isEditing ? 'Edit Proposal' : 'Create New Proposal'}
+              </CardTitle>
+              {lead && (
+                <p className="text-gray-600">For: {lead.companyName} - {lead.contactPerson}</p>
+              )}
+            </div>
+            {isEditing && existingProposal && (
+              <div className="flex items-center space-x-2">
+                <Badge variant="outline">Version {existingProposal.version}</Badge>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowHistory(!showHistory)}
+                >
+                  <History className="h-4 w-4 mr-2" />
+                  History
+                </Button>
+              </div>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
+          {showHistory && existingProposal && (
+            <Card className="mb-6">
+              <CardHeader>
+                <CardTitle className="text-lg">Proposal History</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {existingProposal.history?.length > 0 ? (
+                  existingProposal.history.map((entry) => (
+                    <div key={entry.id} className="p-3 bg-gray-50 rounded">
+                      <div className="flex justify-between items-start mb-2">
+                        <span className="font-medium">Version {entry.version}</span>
+                        <span className="text-xs text-gray-500">
+                          {new Date(entry.modifiedAt).toLocaleString()}
+                        </span>
+                      </div>
+                      <p className="text-sm">{entry.changes}</p>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-gray-500">No history available</p>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <Label htmlFor="leadId">Select Lead *</Label>
-                <Select onValueChange={(value) => handleInputChange('leadId', value)} value={formData.leadId}>
+                <Select 
+                  onValueChange={(value) => handleInputChange('leadId', value)} 
+                  value={formData.leadId}
+                  disabled={isEditing}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Select a lead" />
                   </SelectTrigger>
@@ -167,7 +309,10 @@ const CreateProposal = () => {
 
               <div>
                 <Label htmlFor="templateId">Use Template (Optional)</Label>
-                <Select onValueChange={handleTemplateSelect}>
+                <Select 
+                  onValueChange={handleTemplateSelect}
+                  value={formData.templateId}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Select a template" />
                   </SelectTrigger>
@@ -316,7 +461,7 @@ const CreateProposal = () => {
                 Cancel
               </Button>
               <Button type="submit" className="bg-orange-600 hover:bg-orange-700">
-                Create Proposal
+                {isEditing ? 'Update Proposal' : 'Create Proposal'}
               </Button>
             </div>
           </form>

@@ -55,6 +55,7 @@ const App = () => (
               <Route path="leads/:id/edit" element={<CreateLead />} />
               <Route path="proposals" element={<LeadsList />} />
               <Route path="proposals/create" element={<CreateProposal />} />
+              <Route path="proposals/:id/edit" element={<CreateProposal />} />
               <Route path="masters/proposal-templates" element={<ProposalTemplates />} />
               <Route path="masters/spare-parts" element={<SpareParts />} />
               <Route path="reports" element={<Reports />} />
