@@ -3,16 +3,16 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { Lead, Proposal, ProposalTemplate, SparePart, ProposalHistory } from '@/types';
-import { Upload, X, History } from 'lucide-react';
+import { History } from 'lucide-react';
+import ProposalForm from '@/components/proposals/ProposalForm';
+import SparePartsSelector from '@/components/proposals/SparePartsSelector';
+import FileUploader from '@/components/proposals/FileUploader';
+import ProposalHistoryComponent from '@/components/proposals/ProposalHistory';
 
 const CreateProposal = () => {
   const [searchParams] = useSearchParams();
@@ -148,11 +148,9 @@ const CreateProposal = () => {
 
     const now = new Date().toISOString();
     let proposal: Proposal;
-    let changes = '';
 
     if (isEditing && existingProposal) {
-      // Create history entry for the edit
-      changes = `Updated proposal: ${formData.robot} ${formData.controller}`;
+      const changes = `Updated proposal: ${formData.robot} ${formData.controller}`;
       const historyEntry = createHistory(changes);
       
       proposal = {
@@ -190,7 +188,6 @@ const CreateProposal = () => {
         description: "Proposal has been successfully updated.",
       });
     } else {
-      // Create new proposal
       proposal = {
         id: `proposal-${Date.now()}`,
         leadId: formData.leadId,
@@ -261,200 +258,30 @@ const CreateProposal = () => {
         </CardHeader>
         <CardContent>
           {showHistory && existingProposal && (
-            <Card className="mb-6">
-              <CardHeader>
-                <CardTitle className="text-lg">Proposal History</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {existingProposal.history?.length > 0 ? (
-                  existingProposal.history.map((entry) => (
-                    <div key={entry.id} className="p-3 bg-gray-50 rounded">
-                      <div className="flex justify-between items-start mb-2">
-                        <span className="font-medium">Version {entry.version}</span>
-                        <span className="text-xs text-gray-500">
-                          {new Date(entry.modifiedAt).toLocaleString()}
-                        </span>
-                      </div>
-                      <p className="text-sm">{entry.changes}</p>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-gray-500">No history available</p>
-                )}
-              </CardContent>
-            </Card>
+            <ProposalHistoryComponent history={existingProposal.history || []} />
           )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <Label htmlFor="leadId">Select Lead *</Label>
-                <Select 
-                  onValueChange={(value) => handleInputChange('leadId', value)} 
-                  value={formData.leadId}
-                  disabled={isEditing}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a lead" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {leads.map((lead) => (
-                      <SelectItem key={lead.id} value={lead.id}>
-                        {lead.companyName} - {lead.contactPerson}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+            <ProposalForm
+              formData={formData}
+              leads={leads}
+              templates={templates}
+              isEditing={isEditing}
+              onInputChange={handleInputChange}
+              onTemplateSelect={handleTemplateSelect}
+            />
 
-              <div>
-                <Label htmlFor="templateId">Use Template (Optional)</Label>
-                <Select 
-                  onValueChange={handleTemplateSelect}
-                  value={formData.templateId}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a template" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {templates.map((template) => (
-                      <SelectItem key={template.id} value={template.id}>
-                        {template.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+            <SparePartsSelector
+              spareParts={spareParts}
+              selectedSpareParts={formData.spareParts}
+              onSparePartSelect={handleSparePartSelect}
+            />
 
-              <div>
-                <Label htmlFor="robot">Robot *</Label>
-                <Input
-                  id="robot"
-                  value={formData.robot}
-                  onChange={(e) => handleInputChange('robot', e.target.value)}
-                  placeholder="R-2000iA/100P"
-                  required
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="controller">Controller *</Label>
-                <Input
-                  id="controller"
-                  value={formData.controller}
-                  onChange={(e) => handleInputChange('controller', e.target.value)}
-                  placeholder="RJ3iB"
-                  required
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="reach">Reach *</Label>
-                <Input
-                  id="reach"
-                  value={formData.reach}
-                  onChange={(e) => handleInputChange('reach', e.target.value)}
-                  placeholder="3500"
-                  required
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="payload">Payload *</Label>
-                <Input
-                  id="payload"
-                  value={formData.payload}
-                  onChange={(e) => handleInputChange('payload', e.target.value)}
-                  placeholder="100"
-                  required
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="brand">Brand *</Label>
-                <Input
-                  id="brand"
-                  value={formData.brand}
-                  onChange={(e) => handleInputChange('brand', e.target.value)}
-                  placeholder="Fanuc"
-                  required
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="cost">Cost *</Label>
-                <Input
-                  id="cost"
-                  type="number"
-                  value={formData.cost}
-                  onChange={(e) => handleInputChange('cost', parseFloat(e.target.value) || 0)}
-                  required
-                />
-              </div>
-            </div>
-
-            <div>
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                value={formData.description}
-                onChange={(e) => handleInputChange('description', e.target.value)}
-                rows={4}
-              />
-            </div>
-
-            <div>
-              <Label>Spare Parts</Label>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2">
-                {spareParts.map((part) => (
-                  <label key={part.id} className="flex items-center space-x-2 p-2 border rounded cursor-pointer hover:bg-gray-50">
-                    <input
-                      type="checkbox"
-                      checked={formData.spareParts.includes(part.id)}
-                      onChange={() => handleSparePartSelect(part.id)}
-                      className="rounded"
-                    />
-                    <span className="text-sm">{part.name}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <Label>Attachments</Label>
-              <div className="mt-2">
-                <label className="flex items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
-                  <div className="flex flex-col items-center">
-                    <Upload className="h-8 w-8 text-gray-400" />
-                    <span className="mt-2 text-sm text-gray-600">Click to upload files</span>
-                  </div>
-                  <input
-                    type="file"
-                    multiple
-                    className="hidden"
-                    onChange={handleFileUpload}
-                    accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png"
-                  />
-                </label>
-              </div>
-              {formData.attachments.length > 0 && (
-                <div className="mt-4 space-y-2">
-                  {formData.attachments.map((file, index) => (
-                    <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                      <span className="text-sm">{file.name}</span>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeAttachment(index)}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+            <FileUploader
+              attachments={formData.attachments}
+              onFileUpload={handleFileUpload}
+              onRemoveAttachment={removeAttachment}
+            />
 
             <div className="flex justify-end space-x-4">
               <Button type="button" variant="outline" onClick={() => navigate('/proposals')}>

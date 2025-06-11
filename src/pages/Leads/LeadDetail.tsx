@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -43,8 +42,7 @@ const LeadDetail = () => {
   const handleSave = () => {
     const updatedLead: Lead = {
       ...editData,
-      updatedAt: new Date().toISOString(),
-      status: editData.status as "new" | "contacted" | "proposal_sent" | "negotiation" | "won" | "cancelled" | "hold"
+      updatedAt: new Date().toISOString()
     };
 
     setLeads(prev => prev.map(l => l.id === id ? updatedLead : l));
@@ -186,7 +184,7 @@ const LeadDetail = () => {
                 </div>
                 <div>
                   <Label>Status</Label>
-                  <Select value={editData.status} onValueChange={(value) => setEditData(prev => ({ ...prev, status: value }))}>
+                  <Select value={editData.status} onValueChange={(value: Lead['status']) => setEditData(prev => ({ ...prev, status: value }))}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -220,7 +218,6 @@ const LeadDetail = () => {
           </CardContent>
         </Card>
 
-        {/* Memos */}
         <Card>
           <CardHeader>
             <CardTitle>Memos</CardTitle>
@@ -263,7 +260,6 @@ const LeadDetail = () => {
           </CardContent>
         </Card>
 
-        {/* Follow-ups */}
         <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle className="flex items-center">
