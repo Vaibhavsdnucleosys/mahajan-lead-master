@@ -18,6 +18,7 @@ import ProposalTemplates from "./pages/Masters/ProposalTemplates";
 import SpareParts from "./pages/Masters/SpareParts";
 import Reports from "./pages/Reports/Reports";
 import NotFound from "./pages/NotFound";
+import UserManagement from "./pages/Users/UserManagement";
 
 const queryClient = new QueryClient();
 
@@ -61,6 +62,7 @@ const App = () => (
               <Route path="proposals/:id/view" element={<ProposalView />} />
               <Route path="masters/proposal-templates" element={<ProposalTemplates />} />
               <Route path="masters/spare-parts" element={<SpareParts />} />
+                <Route path="Users" element={<UserManagement />} />
               <Route path="reports" element={<Reports />} />
               <Route path="*" element={<NotFound />} />
             </Route>
