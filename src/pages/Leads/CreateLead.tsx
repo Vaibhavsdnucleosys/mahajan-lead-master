@@ -27,8 +27,10 @@ const CreateLead = () => {
     phone: '',
     application: '',
     source: 'website' as const,
+    status: 'new' as 'new' | 'contacted' | 'proposal_sent' | 'negotiation' | 'won' | 'lost' | 'hold',
     spareParts: [] as string[],
-    attachments: [] as File[]
+    attachments: [] as File[],
+    negotiation: false
   });
 
   const applicationOptions = [
@@ -170,6 +172,52 @@ const CreateLead = () => {
                   </SelectContent>
                 </Select>
               </div>
+
+
+               <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="status">Status</Label>
+              <select
+                id="status"
+                value={formData.status}
+                onChange={(e) => setFormData({ ...formData, status: e.target.value as typeof formData.status })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md"
+              >
+                <option value="new">New</option>
+                <option value="contacted">Contacted</option>
+                <option value="proposal_sent">Proposal Sent</option>
+                <option value="negotiation">Negotiation</option>
+                <option value="won">Won</option>
+                <option value="lost">Lost</option>
+                <option value="hold">Hold</option>
+              </select>
+            </div>
+            <div>
+              <Label htmlFor="source">Source</Label>
+              <select
+                id="source"
+                value={formData.source}
+                onChange={(e) => setFormData({ ...formData, source: e.target.value as typeof formData.source })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md"
+              >
+                <option value="website">Website</option>
+                <option value="email">Email</option>
+                <option value="phone">Phone</option>
+                <option value="referral">Referral</option>
+                <option value="social_media">Social Media</option>
+                <option value="trade_show">Trade Show</option>
+              </select>
+            </div>
+          </div>
+<div className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              id="negotiation"
+              checked={formData.negotiation}
+              onChange={(e) => setFormData({ ...formData, negotiation: e.target.checked })}
+            />
+            <Label htmlFor="negotiation">Mark for Negotiation</Label>
+          </div>
               <div>
                 <Label htmlFor="source">Source *</Label>
                 <Select onValueChange={(value) => handleInputChange('source', value)} defaultValue="website">

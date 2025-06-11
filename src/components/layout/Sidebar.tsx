@@ -38,7 +38,7 @@ const Sidebar = () => {
   return (
     <div className="w-64 bg-white border-r border-gray-200 h-full">
       <div className="p-6">
-        <h2 className="text-lg font-semibold text-gray-900">Navigation</h2>
+        <h2 className="text-lg font-semibold text-gray-900">MIS</h2>
       </div>
       <nav className="mt-6">
         <div className="px-3 space-y-1">
