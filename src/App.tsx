@@ -41,7 +41,7 @@ const App = () => (
       <Toaster />
       <Sonner />
       <AuthProvider>
-        <BrowserRouter>
+         <BrowserRouter basename="/mahajan-lead-master">
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/" element={
