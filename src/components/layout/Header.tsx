@@ -14,9 +14,9 @@ const Header = () => {
           <img 
             src="https://mahajanautomation.com/wp-content/uploads/2023/03/logo-1-284x18.png" 
             alt="Mahajan Automation" 
-            className="h-8"
+            className="h-6"
           />
-          <h1 className="text-xl font-semibold text-gray-900">Lead CMS</h1>
+
         </div>
         <div className="flex items-center space-x-4">
           <div className="flex items-center space-x-2">

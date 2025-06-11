@@ -118,11 +118,16 @@ export interface Attachment {
   uploadedBy: string;
 }
 
+// @/types/index.ts
+export type UserRole = 'admin' | 'manager' | 'engineer' | 'sales';
+
 export interface User {
-  id: string;
   name: string;
+  id: string;
   email: string;
-  role: 'admin' | 'manager' | 'engineer';
-  isActive: boolean;
+  phone: string;
+  role: UserRole;
+  password: string;
   createdAt: string;
 }
+

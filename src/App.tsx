@@ -18,21 +18,23 @@ import ProposalTemplates from "./pages/Masters/ProposalTemplates";
 import SpareParts from "./pages/Masters/SpareParts";
 import Reports from "./pages/Reports/Reports";
 import NotFound from "./pages/NotFound";
+import UserManagement from "./pages/Users/UserManagement";
+import CreateUser from "./pages/Users/CreateUser";
 
 
 const queryClient = new QueryClient();
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, isLoading } = useAuth();
-  
+
   if (isLoading) {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
   }
-  
+
   if (!user) {
     return <Login />;
   }
-  
+
   return <>{children}</>;
 };
 
@@ -42,7 +44,7 @@ const App = () => (
       <Toaster />
       <Sonner />
       <AuthProvider>
-         <BrowserRouter basename="/mahajan-lead-master">
+        <BrowserRouter basename="/mahajan-lead-master">
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/" element={
@@ -62,8 +64,10 @@ const App = () => (
               <Route path="proposals/:id/view" element={<ProposalView />} />
               <Route path="masters/proposal-templates" element={<ProposalTemplates />} />
               <Route path="masters/spare-parts" element={<SpareParts />} />
-              
-
+              <Route path="users" element={<UserManagement />} />
+              <Route path="/users/create" element={<CreateUser />} />
+               <Route path="users/:id" element={<CreateLead />} />
+              <Route path="users/:id/edit" element={<CreateUser />} />
               <Route path="reports" element={<Reports />} />
               <Route path="*" element={<NotFound />} />
             </Route>
